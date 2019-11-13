@@ -18,8 +18,8 @@ use std:: {
 	thread::sleep,
 	time::Duration,
 
-        io::Write,
-        io::stdout,
+	io::Write,
+	io::stdout,
 
 	sync::Mutex,
 	sync::Arc
@@ -34,12 +34,14 @@ struct Race {
 
 fn play ( arc : &mut Arc<Mutex<Race>>, power : i8 ) {
 	let mut rnd = rand::thread_rng ( );
-        let x_offset = 12;
+	let x_offset = 2 + {
+		arc.lock ( ).unwrap ( ).target
+	};
 
 	loop {
 		sleep ( Duration::from_millis ( rnd.gen_range ( 10, 1000 ) ) );
 
-                let mut race = arc.lock ( ).unwrap ( );
+		let mut race = arc.lock ( ).unwrap ( );
 
 		// check if the game is already over
 		if race.over {
@@ -50,10 +52,10 @@ fn play ( arc : &mut Arc<Mutex<Race>>, power : i8 ) {
 		race.position += power;
 
 		// print debug data
-                print ! ( "{};\t", race.position );
+		print ! ( "{};\t", race.position );
 
 		// print status
-                if race.position < 0 {
+		if race.position < 0 {
 			println ! ( "{none:<space1$}[{none:<space2$}{none:<<w$}|{none:>space3$}]",
 				none="",
 				space1=(x_offset-race.target) as usize,
@@ -77,13 +79,13 @@ fn play ( arc : &mut Arc<Mutex<Race>>, power : i8 ) {
 
 		// check if end of the game
 		if power < 0 {
-                    if race.position <= -race.target {
-                        race.over = true;
-                        break;
-                    }
+			if race.position <= -race.target {
+				race.over = true;
+				break;
+			}
 		} else if race.position >= race.target {
-                    race.over = true;
-                    break;
+			race.over = true;
+			break;
 		}
 
 	}
@@ -98,7 +100,7 @@ fn main ( ) {
 
 	let mut players = vec! [ ];
 
-        let arc = Arc::new ( Mutex::new ( game ) );
+	let arc = Arc::new ( Mutex::new ( game ) );
 
 	// create players
 	for _ in 1..5 {
@@ -125,3 +127,5 @@ fn main ( ) {
 		p.join ( ).unwrap ( );
 	}
 }
+
+mod test;
